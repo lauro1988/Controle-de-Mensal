@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistema de Saldo — Simples</title>
+  <style>
+    :root{--bg:#f4f6f8;--card:#ffffff;--muted:#6b7280;--blue:#0ea5e9;--radius:14px}
+    *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    body{margin:0;background:linear-gradient(180deg,var(--bg),#eef2f7);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .wrap{width:100%;max-width:980px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    h1{margin:0;font-size:20px}
+
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:18px}
+    @media(max-width:880px){.grid{grid-template-columns:1fr}}
+
+    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 6px 18px rgba(20,20,50,0.06)}
+
+    .saldoBox{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .saldoLabel{color:var(--muted);font-weight:600}
+    .saldoValue{font-size:28px;font-weight:800;padding:14px 18px;border-radius:12px;min-width:170px;text-align:center;color:white;transition:background 300ms, color 200ms}
+
+    .controls{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+    .row{display:flex;gap:10px}
+    .row input[type="number"],.row input[type="text"],.row input[type="button"],button{padding:10px 12px;border-radius:10px;border:1px solid #e6e9ef;font-size:15px}
+    .row input[type="number"],.row input[type="text"]{flex:1}
+    button.primary{background:#111827;color:white;border:none}
+    button.ghost{background:transparent}
+
+    .reserva{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;background:#eef9ff;border:1px solid rgba(14,165,233,0.12);color:var(--blue);font-weight:700}
+
+    .expensesList{margin-top:14px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px 6px;text-align:left;border-bottom:1px solid #f0f3f6}
+    .muted{color:var(--muted);font-size:13px}
+
+    .small{font-size:13px;color:var(--muted)}
+
+    footer.note{margin-top:12px;color:var(--muted);font-size:13px}
+
+    .btn-inline{display:inline-flex;gap:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">S</div>
+      <div>
+        <h1>Sistema de Saldo — Simples</h1>
+        <div class="small">Abra no navegador do PC ou celular — sem instalação.</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <div class="saldoBox">
+          <div>
+            <div class="saldoLabel">Saldo</div>
+            <div id="saldoValue" class="saldoValue">R$ 0,00</div>
+          </div>
+          <div style="min-width:220px">
+            <div class="small">Ações rápidas</div>
+            <div class="controls">
+              <div class="row">
+                <input id="addAmount" type="number" step="0.01" placeholder="Valor para acrescentar (ex: 150.00)" />
+                <button id="btnAdd" class="primary">Acrescentar</button>
+              </div>
+
+              <div class="row">
+                <input id="expenseDesc" type="text" placeholder="Descrição da despesa (ex: Supermercado)" />
+                <input id="expenseAmount" type="number" step="0.01" placeholder="Valor da despesa" />
+                <button id="btnExpense" class="primary">Adicionar despesa</button>
+              </div>
+
+              <div class="reserva" title="Valor de reserva — destacado em azul">
+                <div>Reserva</div>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input id="reservaInput" type="number" step="0.01" placeholder="0.00" style="width:100px;padding:6px;border-radius:8px;border:1px solid rgba(14,165,233,0.15)" />
+                  <button id="btnSetReserva" class="ghost">Definir</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="expensesList card" style="margin-top:14px;box-shadow:none;padding:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+            <div class="small">Histórico de despesas</div>
+            <div class="small">Saldo disponível: <strong id="availableBalance">R$ 0,00</strong></div>
+          </div>
+          <table id="expensesTable">
+            <thead>
+              <tr><th>Desc</th><th>Valor</th><th>Data</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <footer class="note">Dica: o saldo é salvo localmente no seu navegador. Para acessar em outro dispositivo publique o arquivo online (ver instruções).</footer>
+      </div>
+
+      <aside class="card">
+        <h3>Resumo</h3>
+        <div style="margin-top:10px">
+          <div class="small">Saldo atual</div>
+          <div id="resumoSaldo" style="font-size:22px;font-weight:800;margin-top:6px">R$ 0,00</div>
+
+          <div style="margin-top:12px" class="small">Reserva (destacada em azul)</div>
+          <div id="resumoReserva" style="font-weight:700;color:var(--blue);margin-top:6px">R$ 0,00</div>
+
+          <div style="margin-top:12px" class="small">Total despesas</div>
+          <div id="resumoDesp" style="font-weight:700;margin-top:6px">R$ 0,00</div>
+        </div>
+
+        <div style="margin-top:16px" class="small">Controles</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="btnReset" class="ghost">Resetar</button>
+          <button id="btnExport" class="primary">Exportar (ZIP)</button>
+        </div>
+
+        <div style="margin-top:10px" class="small">Abra este arquivo localmente salvando como <code>index.html</code> ou publique online.</div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // Formatação de moeda BR
+    const fmt = val => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(val);
+
+    const stateKey = 'sistemaSaldo_v1';
+    let state = { balance:0, reserva:0, expenses:[] };
+
+    function save(){localStorage.setItem(stateKey, JSON.stringify(state));}
+    function load(){const s=localStorage.getItem(stateKey); if(s) state=JSON.parse(s);}
+
+    function interpColor(balance){
+      const threshold = 200; // R$ 200,00
+      if(balance >= threshold) return '#16a34a'; // verde
+      const ratio = Math.max(0, Math.min(balance / threshold, 1));
+      const r = Math.round(255 * (1 - ratio));
+      const g = Math.round(255 * ratio);
+      return `rgb(${r},${g},0)`;
+    }
+
+    function updateUI(){
+      const saldoEl = document.getElementById('saldoValue');
+      const resumoSaldo = document.getElementById('resumoSaldo');
+      const resumoReserva = document.getElementById('resumoReserva');
+      const resumoDesp = document.getElementById('resumoDesp');
+      const available = state.balance - state.reserva;
+
+      document.getElementById('availableBalance').innerText = fmt(available);
+
+      saldoEl.innerText = fmt(state.balance);
+      saldoEl.style.background = interpColor(state.balance);
+
+      resumoSaldo.innerText = fmt(state.balance);
+      resumoReserva.innerText = fmt(state.reserva);
+      const totalDesp = state.expenses.reduce((s,e)=>s+e.amount,0);
+      resumoDesp.innerText = fmt(totalDesp);
+
+      // atualizar tabela
+      const tbody = document.querySelector('#expensesTable tbody');
+      tbody.innerHTML = '';
+      state.expenses.slice().reverse().forEach((ex, idx)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${escapeHtml(ex.desc)}</td><td>${fmt(ex.amount)}</td><td class="muted">${new Date(ex.date).toLocaleString()}</td><td><button data-idx="${idx}" class="btn-inline">Remover</button></td>`;
+        tbody.appendChild(tr);
+      });
+
+      // attach remove handlers
+      tbody.querySelectorAll('button[data-idx]').forEach(btn=>{
+        btn.addEventListener('click', e=>{
+          const index = parseInt(btn.getAttribute('data-idx'));
+          // index 0 corresponds to last element in reversed array
+          const realIndex = state.expenses.length - 1 - index;
+          state.balance += state.expenses[realIndex].amount; // devolver o valor ao saldo
+          state.expenses.splice(realIndex,1);
+          save(); updateUI();
+        });
+      });
+
+      save();
+    }
+
+    function escapeHtml(text){return (text||'').replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c]);}
+
+    document.getElementById('btnAdd').addEventListener('click', ()=>{
+      const v = parseFloat(document.getElementById('addAmount').value || 0);
+      if(!isFinite(v) || v<=0){alert('Informe um valor válido para acrescentar.'); return}
+      state.balance += v; save(); updateUI(); document.getElementById('addAmount').value='';
+    });
+
+    document.getElementById('btnExpense').addEventListener('click', ()=>{
+      const desc = document.getElementById('expenseDesc').value || 'Despesa';
+      const v = parseFloat(document.getElementById('expenseAmount').value || 0);
+      if(!isFinite(v) || v<=0){alert('Informe um valor válido para a despesa.'); return}
+      state.expenses.push({desc:desc, amount:v, date: new Date().toISOString()});
+      state.balance -= v; save(); updateUI(); document.getElementById('expenseDesc').value=''; document.getElementById('expenseAmount').value='';
+    });
+
+    document.getElementById('btnSetReserva').addEventListener('click', ()=>{
+      const v = parseFloat(document.getElementById('reservaInput').value || 0);
+      if(!isFinite(v) || v<0){alert('Informe um valor de reserva válido (0 ou positivo).'); return}
+      state.reserva = v; save(); updateUI();
+    });
+
+    document.getElementById('btnReset').addEventListener('click', ()=>{
+      if(confirm('Tem certeza que deseja resetar todos os dados locais?')){state={balance:0,reserva:0,expenses:[]}; save(); updateUI();}
+    });
+
+    document.getElementById('btnExport').addEventListener('click', ()=>{
+      // Gera um ZIP simples contendo o index.html (o próprio arquivo). Como não temos acesso ao sistema de arquivos do servidor
+      // vamos oferecer o HTML atual para download.
+      const blob = new Blob([document.documentElement.outerHTML],{type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'index.html'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    // Inicializa
+    load(); updateUI();
+
+    // permissive: permitir Enter para adicionar
+    document.getElementById('expenseAmount').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('btnExpense').click(); });
+    document.getElementById('addAmount').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('btnAdd').click(); });
+
+  </script>
+</body>
+</html>
